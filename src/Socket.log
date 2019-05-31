@@ -1,0 +1,4 @@
+2019-05-31 18:05:50,563 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 40338, fd = 19
+2019-05-31 18:06:30,451 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 40342, fd = 19
+2019-05-31 18:06:30,452 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 18:06:30,452 - Socket Logger - DEBUG - 127.0.0.1, 40342 closed
