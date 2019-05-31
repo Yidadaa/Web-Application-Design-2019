@@ -99,6 +99,172 @@ HTTP重定向响应报文状态码一般为3xx，这类状态码代表需要客�
 本实验在Linux环境下使用python完成，主要使用python自带的socket库调用epoll函数处理客户端访问，主服务器维护各子服务器的状态，通过HTTP重定向将客户端请求分流到各个子服务器。
 
 \subsection{结果展示}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/epoll-log.png}
+    \caption{epoll服务端工作日志}
+    \label{epoll}
+\end{figure}
 
+图\ref{epoll}展示了使用epoll多路复用技术实现的服务端的工作记录，这个服务端会简单地将客户端发来的数据原封不动地发送回去。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/架构设计.png}
+    \caption{web服务集群架构设计}
+    \label{web}
+\end{figure}
+
+图\ref{web}展示了web服务集群的架构设计，在实现时，为了模拟子服务器集群，在本地启动了若干个socket服务器，并通过不同的端口进行区分，由主服务器维护每个子服务器的流量，每次有新客户端访问时，主服务器将在子服务器列表中查询空闲服务器，并返回一个HTTP 301重定向请求，使得客户端访问空闲的目标服务器，从而实现负载均衡的目的。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/master.png}
+    \caption{web服务集群分流}
+    \label{master}
+\end{figure}
+
+从图\ref{master}可以看到，多次通过客户端访问主服务器，每次都会返回不同的301重定向地址，这表明主服务器的分流作用已实现，达到了负载均衡的目的。
+
+\section*{附录代码\footnote{本项目文件托管在：\url{https://github.com/Yidadaa/Web-Application-Design-2019}}}
+\begin{lstlisting}[language=Python]
+import socket, logging
+import select, errno
+
+logger = logging.getLogger('Socket Logger')
+
+def InitLog():
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('Socket.log')
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+
+    formatter = logging.Formatter(\
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+def HttpResp(port=9000):
+    headers = 'HTTP/1.1 301 Moved Permanently\nLocation:\
+        http://127.0.0.1:{}'.format(port)
+    return bytes(headers, 'utf-8')
+
+if __name__ == "__main__":
+    InitLog()
+
+    HOST, PORT = '127.0.0.1', 9000
+
+    try:
+        listen_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    except socket.error as msg:
+        logger.error('create socket failed.')
+
+    try:
+        listen_fd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    except socket.error as msg:
+        logger.error('setsocketopt reuseaddr failed')
+
+    try:
+        listen_fd.bind((HOST, PORT))
+    except socket.error as msg:
+        logger.error('bind failed')
+
+    try:
+        listen_fd.listen(10)
+    except socket.error as msg:
+        logger.error(msg)
+
+    try:
+        # 创建 epoll 句柄
+        epoll_fd = select.epoll()
+        # 向 epoll 句柄中注册 监听 socket 的 可读 事件
+        epoll_fd.register(listen_fd.fileno(), select.EPOLLIN)
+    except select.error as  msg:
+        logger.error(msg)
+
+    connections = {}
+    addresses = {}
+    datalist = {}
+    serverlist = [9000, 9001, 9002, 9003, 9004]
+
+    index = 0
+
+    while True:
+        # epoll 进行 fd 扫描的地方 -- 未指定超时时间则为阻塞等待
+        epoll_list = epoll_fd.poll()
+
+        for fd, events in epoll_list:
+            # 若为监听 fd 被激活
+            if fd == listen_fd.fileno():
+                # 进行 accept -- 获得连接上来 client 的 ip 和 port，以及 socket 句柄
+                conn, addr = listen_fd.accept()
+                logger.debug("accept connection from %s, %d, fd = %d" % (addr[0]
+                    , addr[1], conn.fileno()))
+                # 将连接 socket 设置为 非阻塞
+                conn.setblocking(0)
+                # 向 epoll 句柄中注册 连接 socket 的 可读 事件
+                epoll_fd.register(conn.fileno(), select.EPOLLIN | 
+                    select.EPOLLET)
+                # 将 conn 和 addr 信息分别保存起来
+                connections[conn.fileno()] = conn
+                addresses[conn.fileno()] = addr
+            elif select.EPOLLIN & events:
+                # 有 可读 事件激活
+                datas = b''
+                while True:
+                    try:
+                        # 从激活 fd 上 recv 10 字节数据
+                        data = connections[fd].recv(10)
+                        # 若当前没有接收到数据，并且之前的累计数据也没有
+                        if not data and not datas:
+                            # 从 epoll 句柄中移除该 连接 fd
+                            epoll_fd.unregister(fd)
+                            # server 侧主动关闭该 连接 fd
+                            connections[fd].close()
+                            logger.debug("%s, %d closed" % (addresses[fd][0], 
+                                addresses[fd][1]))
+                            break
+                        else:
+                            # 将接收到的数据拼接保存在 datas 中
+                            datas += data
+                    except socket.error as  msg:
+                        # 在 非阻塞 socket 上进行 recv 需要处理 读穿 的情况
+                        # 这里实际上是利用 读穿 出 异常 的方式跳到这里进行后续处理
+                        if msg.errno == errno.EAGAIN:
+                            logger.debug("%s receive %s" % (fd, datas))
+                            # 将已接收数据保存起来
+                            datalist[fd] = datas
+                            # 更新 epoll 句柄中连接d 注册事件为 可写
+                            epoll_fd.modify(fd, select.EPOLLET | 
+                                select.EPOLLOUT)
+                            break
+                        else:
+                            # 出错处理
+                            epoll_fd.unregister(fd)
+                            connections[fd].close()
+                            logger.error(msg)
+                            break
+            elif select.EPOLLHUP & events:
+                # 有 HUP 事件激活
+                epoll_fd.unregister(fd)
+                connections[fd].close()
+                logger.debug("%s, %d closed" % (addresses[fd][0], 
+                    addresses[fd][1]))
+            elif select.EPOLLOUT & events:
+                connections[fd].send(HttpResp(serverlist[index]))
+                # 更新 epoll 句柄中连接 fd 注册事件为 可读
+                epoll_fd.modify(fd, select.EPOLLIN | select.EPOLLET)
+
+                index += 1
+                index %= len(serverlist)
+            else:
+                # 其他 epoll 事件不进行处理
+                continue
+        
+\end{lstlisting}
 
 \end{document}

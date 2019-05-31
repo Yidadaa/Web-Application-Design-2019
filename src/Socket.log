@@ -2,3 +2,33 @@
 2019-05-31 18:06:30,451 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 40342, fd = 19
 2019-05-31 18:06:30,452 - Socket Logger - DEBUG - 19 receive b'test data\n'
 2019-05-31 18:06:30,452 - Socket Logger - DEBUG - 127.0.0.1, 40342 closed
+2019-05-31 21:02:48,552 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 40994, fd = 19
+2019-05-31 21:02:48,552 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:02:48,552 - Socket Logger - DEBUG - 127.0.0.1, 40994 closed
+2019-05-31 21:03:20,549 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41022, fd = 19
+2019-05-31 21:03:20,550 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:03:20,550 - Socket Logger - DEBUG - 127.0.0.1, 41022 closed
+2019-05-31 21:03:26,065 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41028, fd = 19
+2019-05-31 21:03:26,065 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:03:26,066 - Socket Logger - DEBUG - 127.0.0.1, 41028 closed
+2019-05-31 21:03:27,308 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41030, fd = 19
+2019-05-31 21:03:27,308 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:03:27,308 - Socket Logger - DEBUG - 127.0.0.1, 41030 closed
+2019-05-31 21:15:08,625 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41402, fd = 19
+2019-05-31 21:15:08,625 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:08,626 - Socket Logger - DEBUG - 127.0.0.1, 41402 closed
+2019-05-31 21:15:10,407 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41404, fd = 19
+2019-05-31 21:15:10,408 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:10,408 - Socket Logger - DEBUG - 127.0.0.1, 41404 closed
+2019-05-31 21:15:11,376 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41406, fd = 19
+2019-05-31 21:15:11,376 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:11,376 - Socket Logger - DEBUG - 127.0.0.1, 41406 closed
+2019-05-31 21:15:12,160 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41408, fd = 19
+2019-05-31 21:15:12,160 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:12,160 - Socket Logger - DEBUG - 127.0.0.1, 41408 closed
+2019-05-31 21:15:12,928 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41410, fd = 19
+2019-05-31 21:15:12,928 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:12,928 - Socket Logger - DEBUG - 127.0.0.1, 41410 closed
+2019-05-31 21:15:13,864 - Socket Logger - DEBUG - accept connection from 127.0.0.1, 41412, fd = 19
+2019-05-31 21:15:13,865 - Socket Logger - DEBUG - 19 receive b'test data\n'
+2019-05-31 21:15:13,865 - Socket Logger - DEBUG - 127.0.0.1, 41412 closed

@@ -17,6 +17,10 @@ def InitLog():
     logger.addHandler(fh)
     logger.addHandler(ch)
 
+def HttpResp(port=9000):
+    headers = 'HTTP/1.1 301 Moved Permanently\nLocation:http://127.0.0.1:{}'.format(port)
+    return bytes(headers, 'utf-8')
+
 if __name__ == "__main__":
     InitLog()
 
@@ -53,6 +57,10 @@ if __name__ == "__main__":
     connections = {}
     addresses = {}
     datalist = {}
+    serverlist = [9000, 9001, 9002, 9003, 9004]
+
+    index = 0
+
     while True:
         # epoll 进行 fd 扫描的地方 -- 未指定超时时间则为阻塞等待
         epoll_list = epoll_fd.poll()
@@ -111,16 +119,20 @@ if __name__ == "__main__":
                 logger.debug("%s, %d closed" % (addresses[fd][0], addresses[fd][1]))
             elif select.EPOLLOUT & events:
                 # 有 可写 事件激活
-                sendLen = 0
-                # 通过 while 循环确保将 buf 中的数据全部发送出去
-                while True:
-                    # 将之前收到的数据发回 client -- 通过 sendLen 来控制发送位置
-                    sendLen += connections[fd].send(datalist[fd][sendLen:])
-                    # 在全部发送完毕后退出 while 循环
-                    if sendLen == len(datalist[fd]):
-                        break
+                # sendLen = 0
+                # # 通过 while 循环确保将 buf 中的数据全部发送出去
+                # while True:
+                #     # 将之前收到的数据发回 client -- 通过 sendLen 来控制发送位置
+                #     sendLen += connections[fd].send(datalist[fd][sendLen:])
+                #     # 在全部发送完毕后退出 while 循环
+                #     if sendLen == len(datalist[fd]):
+                #         break
+                connections[fd].send(HttpResp(serverlist[index]))
                 # 更新 epoll 句柄中连接 fd 注册事件为 可读
                 epoll_fd.modify(fd, select.EPOLLIN | select.EPOLLET)
+
+                index += 1
+                index %= len(serverlist)
             else:
                 # 其他 epoll 事件不进行处理
                 continue
